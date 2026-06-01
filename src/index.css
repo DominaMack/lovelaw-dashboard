@@ -5,41 +5,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
-  body {
-    @apply bg-ll-offwhite text-ll-navy font-sans;
-  }
+  body { @apply bg-ll-offwhite text-ll-navy font-sans; }
+  * { -webkit-tap-highlight-color: transparent; }
 }
 
 @layer components {
-  /* Sidebar nav */
-  .sidebar { @apply fixed left-0 top-0 h-full w-64 bg-ll-dark text-white flex flex-col z-30; }
-  .nav-link { @apply flex items-center gap-3 px-5 py-3 rounded-xl text-ll-dgray hover:bg-white/10 hover:text-white transition text-sm font-medium; }
-  .nav-link.active { @apply bg-ll-blue/20 text-ll-blue border border-ll-blue/30; }
+  .card       { @apply bg-white rounded-2xl shadow-card p-5 md:p-6; }
+  .card-dark  { @apply rounded-2xl shadow-card-dark p-5 md:p-6 text-white; }
 
-  /* Cards */
-  .card { @apply bg-white rounded-2xl shadow-card p-6; }
-  .card-dark { @apply bg-ll-navy rounded-2xl shadow-card-dark p-6 text-white; }
+  .btn-primary { @apply bg-ll-blue text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-600 active:scale-95 transition text-sm; }
+  .btn-outline { @apply border-2 border-ll-blue text-ll-blue font-semibold px-5 py-2.5 rounded-xl hover:bg-ll-blue hover:text-white active:scale-95 transition text-sm; }
+  .btn-amber   { @apply bg-ll-amber text-ll-dark font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-500 active:scale-95 transition text-sm; }
 
-  /* Buttons */
-  .btn-primary { @apply bg-ll-blue text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-600 transition shadow-blue text-sm; }
-  .btn-outline { @apply border-2 border-ll-blue text-ll-blue font-semibold px-5 py-2.5 rounded-xl hover:bg-ll-blue hover:text-white transition text-sm; }
-  .btn-amber  { @apply bg-ll-amber text-ll-dark font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-500 transition text-sm; }
-  .btn-ghost  { @apply text-ll-dgray hover:text-white px-4 py-2 rounded-xl hover:bg-white/10 transition text-sm; }
-
-  /* Badges */
   .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold; }
 
-  /* Status indicators */
-  .dot-green  { @apply w-2 h-2 rounded-full bg-green-400 inline-block; }
-  .dot-red    { @apply w-2 h-2 rounded-full bg-red-400 inline-block; }
-  .dot-amber  { @apply w-2 h-2 rounded-full bg-amber-400 inline-block; }
-  .dot-blue   { @apply w-2 h-2 rounded-full bg-ll-blue inline-block; }
-
-  /* Stat cards */
-  .stat-card { @apply card flex flex-col gap-1; }
-  .stat-number { @apply text-3xl font-bold text-ll-navy; }
-  .stat-label  { @apply text-sm text-ll-gray; }
-  .stat-delta  { @apply text-xs font-semibold; }
-  .stat-delta.up   { @apply text-green-500; }
-  .stat-delta.down { @apply text-red-400; }
+  /* Mobile-first touch targets */
+  button, a { min-height: 36px; }
 }
