@@ -13,36 +13,28 @@ import AccessCodes from "./pages/AccessCodes.jsx";
 import InstitutionOverview from "./pages/InstitutionOverview.jsx";
 import InstitutionRoster from "./pages/InstitutionRoster.jsx";
 import InstitutionFlags from "./pages/InstitutionFlags.jsx";
+import Redeem from "./pages/Redeem.jsx";
 
 function ProtectedLayout({ user, setUser }) {
   const [viewAs, setViewAs] = useState(null);
   const activeUser = viewAs || user;
   const isInstitution = activeUser?.role === "institution";
 
-  function handleImpersonate(u) {
-    setViewAs(u);
-  }
-
   return (
     <div className="flex min-h-screen bg-ll-offwhite">
-      {/* Desktop sidebar */}
       <div className="hidden md:block">
-        <Sidebar user={activeUser} realUser={user} onImpersonate={handleImpersonate} />
+        <Sidebar user={activeUser} realUser={user} onImpersonate={u => setViewAs(u)} />
       </div>
-
-      {/* Mobile top nav */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40">
-        <MobileNav user={activeUser} realUser={user} onImpersonate={handleImpersonate} />
+        <MobileNav user={activeUser} realUser={user} onImpersonate={u => setViewAs(u)} />
       </div>
-
-      {/* Main content */}
       <main className="flex-1 md:ml-64 min-h-screen overflow-y-auto pt-16 md:pt-0">
         {isInstitution ? (
           <Routes>
-            <Route path="/"        element={<InstitutionOverview user={activeUser} />} />
-            <Route path="/roster"  element={<InstitutionRoster  user={activeUser} />} />
-            <Route path="/flags"   element={<InstitutionFlags   user={activeUser} />} />
-            <Route path="*"        element={<Navigate to="/" />} />
+            <Route path="/"       element={<InstitutionOverview user={activeUser} />} />
+            <Route path="/roster" element={<InstitutionRoster   user={activeUser} />} />
+            <Route path="/flags"  element={<InstitutionFlags    user={activeUser} />} />
+            <Route path="*"       element={<Navigate to="/" />} />
           </Routes>
         ) : (
           <Routes>
@@ -63,17 +55,19 @@ function ProtectedLayout({ user, setUser }) {
 export default function App() {
   const [user, setUser] = useState(() => auth.getUser());
 
-  if (!user) {
-    return (
-      <BrowserRouter>
-        <Login onLogin={(u) => setUser(u)} />
-      </BrowserRouter>
-    );
-  }
-
   return (
     <BrowserRouter>
-      <ProtectedLayout user={user} setUser={setUser} />
+      <Routes>
+        {/* Public — no login required */}
+        <Route path="/redeem" element={<Redeem />} />
+
+        {/* Auth-gated */}
+        <Route path="/*" element={
+          user
+            ? <ProtectedLayout user={user} setUser={setUser} />
+            : <Login onLogin={u => setUser(u)} />
+        } />
+      </Routes>
     </BrowserRouter>
   );
 }
