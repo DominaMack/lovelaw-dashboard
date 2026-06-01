@@ -1,125 +1,128 @@
 import { useState } from "react";
-import { auth, DEMO_USERS } from "../api/base44.js";
-import Logo from "../components/Logo.jsx";
+import { auth } from "../api/base44.js";
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPass, setShowPass] = useState(false);
 
-  function handleLogin(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setTimeout(() => {
-      const user = DEMO_USERS.find(u => u.email === email && u.password === password);
-      if (user) {
-        auth.setUser(user);
-        onLogin(user);
-      } else {
-        setError("Invalid email or password. Please try again.");
-      }
-      setLoading(false);
-    }, 800);
-  }
-
-  function handleGoogle() {
-    setError("Google sign-in coming soon. Use email/password for now.");
+    setError(""); setLoading(true);
+    try {
+      const user = auth.login(email, password, remember);
+      onLogin(user);
+    } catch (err) {
+      setError(err.message);
+    }
+    setLoading(false);
   }
 
   return (
-    <div className="min-h-screen bg-navy-900 flex">
-      {/* Left — Brand Panel */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-gradient-to-br from-navy-900 to-navy-800 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5" style={{backgroundImage:"radial-gradient(circle at 30% 50%, #f5c842 0%, transparent 60%)"}}/>
-        <Logo size="md" dark={false} />
-        <div>
-          <blockquote className="text-white/90 text-2xl font-serif leading-relaxed mb-6">
-            "Every law student, every bar candidate, every attorney deserves to feel motivated, represented, and supported — every single day."
-          </blockquote>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gold-400/20 flex items-center justify-center text-gold-400 font-bold">DC</div>
-            <div>
-              <div className="text-white font-semibold text-sm">DC McCraney, J.D.</div>
-              <div className="text-white/50 text-xs">Founder, Love Law™</div>
-            </div>
-          </div>
+    <div className="min-h-screen flex" style={{background:"#0a0f1e"}}>
+      {/* Left — brand panel */}
+      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12" style={{background:"linear-gradient(135deg,#0a0f1e 0%,#0f172a 100%)"}}>
+        <div className="flex items-center gap-3">
+          <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="20" fill="#3b82f6" fillOpacity=".15"/>
+            <path d="M20 8 L20 32 M12 16 L20 12 L28 16 M10 28 L30 28" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <span className="text-white font-bold text-xl">Love Law™</span>
         </div>
+
+        <div>
+          <div className="text-xs uppercase tracking-widest text-blue-400 font-semibold mb-4">Daily Dose of Justice™</div>
+          <h1 className="text-5xl font-bold text-white leading-tight mb-6">
+            From 1L to Esq.<br/>
+            <span style={{color:"#3b82f6"}}>Stay Motivated</span><br/>
+            Every Step.
+          </h1>
+          <p className="text-slate-400 text-lg leading-relaxed">
+            Internal operations platform for<br/>Love Law Collective, LLC.
+          </p>
+        </div>
+
         <div className="grid grid-cols-3 gap-4">
-          {[["1,037+","Messages"],["6","Segments"],["24/7","Monitoring"]].map(([v,l]) => (
-            <div key={l} className="text-center">
-              <div className="text-gold-400 font-bold text-xl">{v}</div>
-              <div className="text-white/50 text-xs">{l}</div>
+          {[["1,037","Messages Ready"],["921","Approved"],["6","Segments"]].map(([n,l])=>(
+            <div key={l} className="bg-white/5 border border-white/10 rounded-2xl p-4">
+              <div className="text-2xl font-bold text-white">{n}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{l}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right — Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-cream">
+      {/* Right — login form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-ll-offwhite">
         <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8 flex justify-center">
-            <Logo size="lg" dark={true} />
-          </div>
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-navy-900">Welcome back</h1>
-            <p className="text-gray-500 mt-1 text-sm">Sign in to your Love Law™ dashboard</p>
-          </div>
-
-          {/* Google Button */}
-          <button onClick={handleGoogle}
-            className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition mb-4 shadow-sm">
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2 mb-8 lg:hidden">
+            <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="20" r="20" fill="#3b82f6" fillOpacity=".15"/>
+              <path d="M20 8 L20 32 M12 16 L20 12 L28 16 M10 28 L30 28" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"/>
             </svg>
-            Continue with Google
-          </button>
-
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-gray-200"/>
-            <span className="text-xs text-gray-400">or</span>
-            <div className="flex-1 h-px bg-gray-200"/>
+            <span className="font-bold text-ll-navy text-lg">Love Law™</span>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <h2 className="text-2xl font-bold text-ll-navy mb-1">Welcome back</h2>
+          <p className="text-ll-gray text-sm mb-8">Sign in to your Love Law™ dashboard</p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">Email Address</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-navy-900/20 focus:border-navy-700 bg-white transition"
-                placeholder="you@shoplovelaw.com" autoComplete="email" />
+              <label className="block text-xs font-semibold text-ll-gray uppercase tracking-wide mb-1.5">Email</label>
+              <input
+                type="email" required value={email} onChange={e=>setEmail(e.target.value)}
+                placeholder="dc@shoplovelaw.com"
+                className="w-full border border-ll-lgray rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ll-blue/30 focus:border-ll-blue bg-white"
+              />
             </div>
             <div>
-              <div className="flex justify-between mb-1.5">
-                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Password</label>
-                <button type="button" className="text-xs text-navy-700 hover:underline">Forgot password?</button>
-              </div>
-              <div className="relative">
-                <input type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-navy-900/20 focus:border-navy-700 bg-white transition pr-12"
-                  placeholder="••••••••" autoComplete="current-password" />
-                <button type="button" onClick={() => setShowPass(s => !s)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                  {showPass ? "Hide" : "Show"}
-                </button>
-              </div>
+              <label className="block text-xs font-semibold text-ll-gray uppercase tracking-wide mb-1.5">Password</label>
+              <input
+                type="password" required value={password} onChange={e=>setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full border border-ll-lgray rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ll-blue/30 focus:border-ll-blue bg-white"
+              />
             </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm text-ll-gray cursor-pointer">
+                <input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)}
+                  className="w-4 h-4 rounded accent-ll-blue" />
+                Stay signed in
+              </label>
+              <a href="#" className="text-sm text-ll-blue hover:underline font-medium">Forgot password?</a>
+            </div>
+
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{error}</div>
             )}
+
             <button type="submit" disabled={loading}
-              className="w-full bg-navy-900 text-gold-400 py-3.5 rounded-xl font-semibold text-sm hover:bg-navy-800 transition-all shadow-md disabled:opacity-60 mt-2">
+              className="w-full btn-primary py-3 text-base disabled:opacity-60">
               {loading ? "Signing in..." : "Sign In →"}
             </button>
           </form>
 
-          <p className="text-center text-xs text-gray-400 mt-8">
-            Love Law™ · <a href="https://shoplovelaw.com" className="hover:underline">shoplovelaw.com</a>
-          </p>
+          <div className="mt-8 pt-6 border-t border-ll-lgray">
+            <p className="text-xs text-ll-gray text-center mb-3 font-medium">Quick access</p>
+            <div className="grid grid-cols-1 gap-2">
+              {[
+                { label:"Founder (DC)", email:"dc@shoplovelaw.com", color:"bg-blue-50 text-blue-700 hover:bg-blue-100" },
+                { label:"Employee", email:"employee@shoplovelaw.com", color:"bg-slate-50 text-slate-700 hover:bg-slate-100" },
+                { label:"Institution Admin", email:"admin@lawschool.edu", color:"bg-purple-50 text-purple-700 hover:bg-purple-100" },
+              ].map(u=>(
+                <button key={u.email} onClick={()=>{ setEmail(u.email); setPassword("LoveLaw2026!"); }}
+                  className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition ${u.color}`}>
+                  {u.label} — {u.email}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-ll-gray mt-6">Love Law Collective, LLC · Confidential</p>
         </div>
       </div>
     </div>

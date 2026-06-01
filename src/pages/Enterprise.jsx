@@ -1,13 +1,33 @@
 import { useState, useEffect } from "react";
 import { listEntity } from "../api/base44.js";
 
-const TYPE_COLORS = {
-  "law-school":"bg-blue-50 text-blue-700","law-firm":"bg-purple-50 text-purple-700",
-  "bar-prep-company":"bg-red-50 text-red-700","solo-firm":"bg-green-50 text-green-700",
-  "student-org":"bg-amber-50 text-amber-700","legal-association":"bg-indigo-50 text-indigo-700",
-};
+// Real pricing from shoplovelaw.com/enterprise
+const TIERS = [
+  {
+    name:"Small", users:"Up to 250 users", price:"$499/month", setup:"$500",
+    features:["Daily SMS messages","Basic customization","Email support","Monthly reports"],
+    color:"border-ll-lgray", badge:null,
+  },
+  {
+    name:"Mid-Size", users:"Up to 1,000 users", price:"$1,499/month", setup:"$1,000",
+    features:["Everything in Small","Custom message tracks","Priority support","Role-based messaging","Quarterly reviews"],
+    color:"border-ll-blue", badge:"Most Popular",
+  },
+  {
+    name:"Enterprise", users:"Up to 5,000+ users", price:"$3,500/month", setup:"$2,500",
+    features:["Full customization","Dedicated support","Analytics dashboard","Multi-campus support","Custom integrations","White-label option"],
+    color:"border-ll-lgray", badge:null,
+  },
+];
 
-export default function Enterprise() {
+const WHO = [
+  { icon:"🎓", title:"Law Schools", items:["1L onboarding","Academic support","Bar prep reinforcement"] },
+  { icon:"📚", title:"Bar Prep Programs", items:["Daily accountability","Motivation during study period"] },
+  { icon:"⚖️", title:"Law Firms", items:["Associate wellness","Burnout prevention","Culture building"] },
+  { icon:"🤝", title:"Legal Organizations", items:["Member engagement","Professional development"] },
+];
+
+export default function Enterprise({ user }) {
   const [institutions, setInstitutions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -18,118 +38,132 @@ export default function Enterprise() {
       .catch(() => setLoading(false));
   },[]);
 
-  const seats = (inst) => {
-    const pct = inst.seat_limit ? Math.round((inst.seats_used||0)/inst.seat_limit*100) : 0;
-    return pct;
-  };
-
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <div className="text-xs text-gold-500 uppercase tracking-widest font-semibold mb-1">Enterprise</div>
-          <h1 className="text-3xl font-bold text-navy-900">Institutions & Firms</h1>
-          <p className="text-gray-400 mt-1">Law schools, firms, bar prep companies, and organizations.</p>
+      {/* Header */}
+      <div className="rounded-2xl p-8 mb-8 text-white" style={{background:"#0a0f1e"}}>
+        <div className="text-xs text-blue-400 uppercase tracking-widest font-semibold mb-2">Enterprise Solutions</div>
+        <h1 className="text-3xl font-bold mb-2">
+          Increase Bar Pass Rates.<br/>
+          <span style={{color:"#3b82f6"}}>Reduce Burnout. Improve Retention.</span>
+        </h1>
+        <p className="text-slate-400 mb-6 max-w-2xl">
+          Love Law™ Enterprise delivers daily motivation and engagement through SMS to improve student success, retention, and bar readiness.
+        </p>
+        <div className="flex gap-3">
+          <button className="btn-primary">Schedule a Demo</button>
+          <button className="btn-outline" style={{borderColor:"#3b82f6",color:"#3b82f6",background:"transparent"}}>Request Pricing</button>
         </div>
-        <button className="btn-primary">+ Add Institution</button>
+        <div className="mt-6 text-sm text-blue-300 font-semibold">📲 90%+ open rates with SMS engagement</div>
       </div>
 
-      {/* Tier Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {[
-          { tier:"Basic", price:"$299/mo", seats:"Up to 50 seats", features:["Daily SMS","Basic reporting","Email support"], color:"border-gray-200" },
-          { tier:"Professional", price:"$799/mo", seats:"Up to 250 seats", features:["Daily SMS","Bar exam sync","Distress flags","Priority support"], color:"border-gold-400/40 bg-navy-900/2", badge:"Most Popular" },
-          { tier:"Elite", price:"Custom", seats:"Unlimited seats", features:["White-label","Custom tracks","Dedicated manager","Full analytics"], color:"border-navy-900/20" },
-        ].map(p => (
-          <div key={p.tier} className={`card border-2 ${p.color} relative`}>
-            {p.badge && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold-400 text-navy-900 text-xs px-3 py-0.5 rounded-full font-bold">{p.badge}</span>}
-            <div className="font-bold text-navy-900 text-lg mb-1">{p.tier}</div>
-            <div className="text-2xl font-bold text-navy-900 mb-0.5">{p.price}</div>
-            <div className="text-xs text-gray-400 mb-4">{p.seats}</div>
-            <ul className="space-y-1.5">
-              {p.features.map(f => <li key={f} className="text-xs text-gray-600 flex gap-2"><span className="text-green-500">✓</span>{f}</li>)}
-            </ul>
+      {/* Impact Stats */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        {[["+35%","Engagement increase"],["92%","Average open rate"],["4.8/5","Satisfaction score"],["48hrs","Time to launch"]].map(([v,l])=>(
+          <div key={l} className="card text-center py-5">
+            <div className="text-2xl font-bold" style={{color:"#3b82f6"}}>{v}</div>
+            <div className="text-xs text-ll-gray mt-1">{l}</div>
           </div>
         ))}
       </div>
 
-      {/* Institutions Table */}
+      {/* Who It's For */}
+      <div className="card mb-8">
+        <h2 className="font-bold text-ll-navy text-lg mb-4">Who It's For</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {WHO.map(w => (
+            <div key={w.title} className="bg-ll-offwhite rounded-xl p-4 border border-ll-lgray">
+              <div className="text-2xl mb-2">{w.icon}</div>
+              <div className="font-semibold text-ll-navy text-sm mb-2">{w.title}</div>
+              <ul className="space-y-1">
+                {w.items.map(i => <li key={i} className="text-xs text-ll-gray flex gap-1.5"><span style={{color:"#3b82f6"}}>✓</span>{i}</li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* REAL Pricing from shoplovelaw.com */}
+      <div className="mb-8">
+        <h2 className="font-bold text-ll-navy text-xl mb-1">Enterprise Pricing</h2>
+        <p className="text-ll-gray text-sm mb-6">Simple, transparent pricing for institutions. Starting at just $1–$2 per student/month.</p>
+        <div className="grid grid-cols-3 gap-5">
+          {TIERS.map(t => (
+            <div key={t.name} className={`card border-2 ${t.color} relative`}>
+              {t.badge && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-white"
+                  style={{background:"#3b82f6"}}>
+                  {t.badge}
+                </div>
+              )}
+              <div className="font-bold text-ll-navy text-lg mb-0.5">{t.name}</div>
+              <div className="text-xs text-ll-gray mb-3">{t.users}</div>
+              <div className="text-3xl font-bold text-ll-navy mb-0.5">{t.price}</div>
+              <div className="text-xs text-ll-gray mb-4">Setup: {t.setup}</div>
+              <ul className="space-y-2 mb-5">
+                {t.features.map(f => (
+                  <li key={f} className="text-sm text-ll-gray flex gap-2 items-start">
+                    <span className="text-green-500 mt-0.5">✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+              <button className={t.badge ? "btn-primary w-full" : "btn-outline w-full"}>
+                Get Started
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Active Institutions Table */}
       <div className="card p-0 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="font-bold text-navy-900">Active Institutions</h2>
-          <span className="text-sm text-gray-400">{institutions.length} total</span>
+        <div className="px-6 py-4 border-b border-ll-lgray flex justify-between items-center">
+          <div>
+            <h2 className="font-bold text-ll-navy">Active Institutions</h2>
+            <p className="text-xs text-ll-gray mt-0.5">Enrolled enterprise clients</p>
+          </div>
+          <button className="btn-primary text-xs">+ Add Institution</button>
         </div>
         {loading ? (
-          <div className="text-center py-16 text-gray-300">Loading...</div>
+          <div className="text-center py-16 text-ll-gray">Loading...</div>
         ) : institutions.length === 0 ? (
-          <div className="text-center py-16 text-gray-300">
-            <div className="text-3xl mb-2">🏛️</div>
-            <div className="font-medium mb-1">No institutions yet</div>
-            <div className="text-sm">Your enterprise clients will appear here once enrolled.</div>
+          <div className="text-center py-16 text-ll-gray">
+            <div className="text-4xl mb-3">🏛️</div>
+            <div className="font-semibold text-ll-navy mb-1">No institutions enrolled yet</div>
+            <div className="text-sm">Your first enterprise clients will appear here once onboarded.</div>
           </div>
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                {["Institution","Type","Tier","Seats","Bar Exam","Status"].map(h => (
-                  <th key={h} className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide px-6 py-3">{h}</th>
+              <tr className="bg-ll-offwhite border-b border-ll-lgray">
+                {["Institution","Type","Tier","Seats","Bar Exam","Status"].map(h=>(
+                  <th key={h} className="text-left text-xs font-semibold text-ll-gray uppercase tracking-wide px-6 py-3">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {institutions.map(inst => {
-                const pct = seats(inst);
-                return (
-                  <tr key={inst.id} onClick={() => setSelected(inst)}
-                    className="border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition">
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-navy-900 text-sm">{inst.name}</div>
-                      <div className="text-xs text-gray-400">{inst.admin_email}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`badge ${TYPE_COLORS[inst.type]||"bg-gray-100 text-gray-600"}`}>{inst.type}</span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 capitalize">{inst.tier}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-xs text-gray-600 mb-1">{inst.seats_used||0}/{inst.seat_limit||0}</div>
-                      <div className="w-20 h-1.5 bg-gray-100 rounded-full">
-                        <div className={`h-1.5 rounded-full ${pct>90?"bg-red-400":pct>70?"bg-amber-400":"bg-green-400"}`} style={{width:`${Math.min(pct,100)}%`}}/>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-500">{inst.bar_exam_date||"—"}</td>
-                    <td className="px-6 py-4">
-                      <span className={`badge ${inst.status==="active"?"bg-green-100 text-green-700":"bg-gray-100 text-gray-500"}`}>{inst.status||"active"}</span>
-                    </td>
-                  </tr>
-                );
-              })}
+              {institutions.map(inst=>(
+                <tr key={inst.id} onClick={()=>setSelected(inst)}
+                  className="border-b border-ll-lgray/50 hover:bg-ll-offwhite cursor-pointer transition">
+                  <td className="px-6 py-4">
+                    <div className="font-semibold text-ll-navy text-sm">{inst.name}</div>
+                    <div className="text-xs text-ll-gray">{inst.admin_email}</div>
+                  </td>
+                  <td className="px-6 py-4 text-xs text-ll-gray capitalize">{inst.type}</td>
+                  <td className="px-6 py-4 text-xs text-ll-gray capitalize">{inst.tier}</td>
+                  <td className="px-6 py-4 text-xs text-ll-gray">{inst.seats_used||0}/{inst.seat_limit||0}</td>
+                  <td className="px-6 py-4 text-xs text-ll-gray">{inst.bar_exam_date||"—"}</td>
+                  <td className="px-6 py-4">
+                    <span className={`badge ${inst.status==="active"?"bg-green-100 text-green-700":"bg-slate-100 text-slate-500"}`}>
+                      {inst.status||"active"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
       </div>
-
-      {selected && (
-        <div className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-2xl shadow-luxury w-full max-w-lg p-7" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between mb-5">
-              <h2 className="font-bold text-navy-900 text-xl">{selected.name}</h2>
-              <button onClick={() => setSelected(null)} className="text-gray-300 hover:text-gray-500 text-xl">✕</button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {[["Type",selected.type],["Tier",selected.tier],["Admin",selected.admin_name],["Email",selected.admin_email],
-                ["Seats",`${selected.seats_used||0}/${selected.seat_limit||0}`],["Bar Exam",selected.bar_exam_date||"—"],
-                ["Contract Start",selected.contract_start||"—"],["Contract End",selected.contract_end||"—"],
-              ].map(([k,v]) => (
-                <div key={k} className="bg-gray-50 rounded-xl p-3">
-                  <div className="text-xs text-gray-400 mb-0.5">{k}</div>
-                  <div className="font-semibold text-navy-900 capitalize text-sm">{v}</div>
-                </div>
-              ))}
-            </div>
-            {selected.notes && <div className="mt-4 bg-amber-50 rounded-xl p-3 text-sm text-amber-700">{selected.notes}</div>}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

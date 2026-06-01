@@ -1,131 +1,142 @@
 import { useState, useEffect } from "react";
 import { listEntity } from "../api/base44.js";
 
-const STAT = ({ label, value, icon, sub, accent }) => (
-  <div className={`bg-white rounded-2xl border p-6 shadow-card relative overflow-hidden ${accent ? "border-gold-400/30 bg-gradient-to-br from-navy-900 to-navy-800" : "border-gray-100"}`}>
-    {accent && <div className="absolute inset-0 opacity-5" style={{backgroundImage:"radial-gradient(circle at 80% 20%, #f5c842, transparent 60%)"}}/>}
-    <div className="flex items-start justify-between mb-4 relative">
-      <span className="text-2xl">{icon}</span>
-      {accent && <span className="text-xs text-gold-400/60 uppercase tracking-widest font-medium">Live</span>}
+function StatCard({ icon, value, label, delta, deltaUp, color }) {
+  return (
+    <div className="card flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-2xl">{icon}</span>
+        {delta && (
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${deltaUp ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+            {delta}
+          </span>
+        )}
+      </div>
+      <div className="text-3xl font-bold" style={color ? {color} : {color:"#0f172a"}}>{value}</div>
+      <div className="text-sm text-ll-gray">{label}</div>
     </div>
-    <div className={`text-3xl font-bold mb-1 relative ${accent ? "text-gold-400" : "text-navy-900"}`}>{value}</div>
-    <div className={`text-sm font-medium ${accent ? "text-white/70" : "text-gray-600"}`}>{label}</div>
-    {sub && <div className={`text-xs mt-1 ${accent ? "text-white/40" : "text-gray-400"}`}>{sub}</div>}
-  </div>
-);
-
-const STATUS = ({ label, status, ok }) => (
-  <div className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
-    <span className="text-sm text-gray-600">{label}</span>
-    <span className={`badge ${ok ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>{status}</span>
-  </div>
-);
+  );
+}
 
 export default function Overview({ user }) {
-  const [counts, setCounts] = useState({ subscribers: 0, messages: 0, flags: 0, codes: 0, pending: 0 });
+  const [msgs, setMsgs] = useState({approved:0, pending:0, total:0});
+  const [subs, setSubs] = useState({active:0, total:0});
+  const [flags, setFlags] = useState({open:0});
+  const [codes, setCodes] = useState({active:0});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [subs, msgs, flags, codes, pending] = await Promise.all([
-          listEntity("Subscriber", { subscription_status: "active" }, 1),
-          listEntity("Message", {}, 1),
-          listEntity("DistrессFlag", { status: "open" }, 1),
-          listEntity("AccessCode", {}, 1),
-          listEntity("Message", { approval_status: "pending" }, 1),
-        ]);
-        setCounts({
-          subscribers: subs.count || 0,
-          messages: msgs.count || 0,
-          flags: flags.count || 0,
-          codes: codes.count || 0,
-          pending: pending.count || 0,
-        });
-      } catch(e) { console.error(e); }
+    Promise.all([
+      listEntity("Message", {}, 500, 0),
+      listEntity("Subscriber", {}, 500, 0),
+      listEntity("DistrессFlag", {}, 100, 0),
+      listEntity("AccessCode", {}, 100, 0),
+    ]).then(([m, s, f, c]) => {
+      const mr = m.records || [];
+      const sr = s.records || [];
+      const fr = f.records || [];
+      const cr = c.records || [];
+      setMsgs({
+        approved: mr.filter(x=>x.approval_status==="approved").length,
+        pending:  mr.filter(x=>x.approval_status==="pending").length,
+        total:    mr.length,
+      });
+      setSubs({
+        active: sr.filter(x=>x.subscription_status==="active").length,
+        total:  sr.length,
+      });
+      setFlags({ open: fr.filter(x=>x.status==="open").length });
+      setCodes({ active: cr.filter(x=>x.status==="active").length });
       setLoading(false);
-    }
-    load();
+    }).catch(() => setLoading(false));
   }, []);
 
-  const v = (n) => loading ? "—" : n.toLocaleString();
+  const now = new Date();
+  const greeting = now.getHours() < 12 ? "Good morning" : now.getHours() < 17 ? "Good afternoon" : "Good evening";
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <div className="text-xs text-gold-500 uppercase tracking-widest font-semibold mb-1">
-          {new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}
+        <div className="text-xs text-ll-gray uppercase tracking-widest font-semibold mb-1">
+          {now.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
         </div>
-        <h1 className="text-3xl font-bold text-navy-900">
-          Good morning{user?.name ? `, ${user.name.split(" ")[0]}` : ""}. ⚖️
+        <h1 className="text-3xl font-bold text-ll-navy">
+          {greeting}, {user?.name?.split(" ")[0]} 👋
         </h1>
-        <p className="text-gray-400 mt-1">Here's what's happening at Love Law™ today.</p>
+        <p className="text-ll-gray mt-1">Here's your Love Law™ system at a glance.</p>
       </div>
 
-      {/* Stats */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <STAT label="Active Subscribers" value={v(counts.subscribers)} icon="👥" sub="Daily Dose of Justice™" accent={true} />
-        <STAT label="Messages in Library" value={v(counts.messages)} icon="📚" sub="Standard + Faith-Based" />
-        <STAT label="Pending Approval" value={v(counts.pending)} icon="⏳" sub="Awaiting your review" />
-        <STAT label="Open Distress Flags" value={v(counts.flags)} icon="🚨" sub="Needs attention" />
+        <StatCard icon="✉️" value={loading?"—":msgs.total.toLocaleString()} label="Total Messages" color="#3b82f6" />
+        <StatCard icon="✅" value={loading?"—":msgs.approved.toLocaleString()} label="Approved" deltaUp delta={msgs.pending>0?`${msgs.pending} pending`:null} />
+        <StatCard icon="👥" value={loading?"—":subs.active.toLocaleString()} label="Active Subscribers" />
+        <StatCard icon="🚨" value={loading?"—":flags.open} label="Open Distress Flags" color={flags.open>0?"#ef4444":undefined} />
       </div>
 
-      {/* Two columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Actions */}
-        <div className="card">
-          <h2 className="font-bold text-navy-900 text-lg mb-5">Quick Actions</h2>
-          <div className="space-y-2.5">
+      {/* System health */}
+      <div className="grid grid-cols-3 gap-5 mb-8">
+        <div className="card col-span-2">
+          <h2 className="font-bold text-ll-navy mb-4">System Status</h2>
+          <div className="space-y-3">
             {[
-              { label:"Review Pending Messages", href:"/messages", color:"bg-navy-900 text-gold-400 hover:bg-navy-800", count: counts.pending },
-              { label:"Add Subscriber", href:"/subscribers", color:"bg-green-600 text-white hover:bg-green-700" },
-              { label:"Generate Access Codes", href:"/codes", color:"bg-gold-400 text-navy-900 hover:bg-gold-300" },
-              { label:"Check Distress Flags", href:"/flags", color:"bg-red-50 text-red-700 hover:bg-red-100", count: counts.flags },
-              { label:"Enterprise Management", href:"/enterprise", color:"bg-purple-50 text-purple-700 hover:bg-purple-100" },
-            ].map(a => (
-              <a key={a.href} href={a.href}
-                className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold transition ${a.color}`}>
-                <span>{a.label}</span>
-                <span>{a.count !== undefined ? a.count : "→"}</span>
-              </a>
+              { label:"Daily Send Automation", status:"Live", ok:true },
+              { label:"GHL SMS Integration", status:"Connected — The Domina Agency", ok:true },
+              { label:"A2P 10DLC Compliance", status:"Approved", ok:true },
+              { label:"Distress Monitoring", status:"Active 24/7", ok:true },
+              { label:"Message Library", status:`${msgs.total} messages · ${msgs.approved} approved`, ok:msgs.approved>0 },
+            ].map(s=>(
+              <div key={s.label} className="flex items-center justify-between py-2 border-b border-ll-lgray/50 last:border-0">
+                <span className="text-sm text-ll-navy font-medium">{s.label}</span>
+                <span className={`flex items-center gap-2 text-xs font-semibold ${s.ok?"text-green-600":"text-amber-600"}`}>
+                  <span className={`w-2 h-2 rounded-full ${s.ok?"bg-green-500":"bg-amber-400"}`}/>
+                  {s.status}
+                </span>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* System Status */}
-        <div className="card">
-          <h2 className="font-bold text-navy-900 text-lg mb-5">System Status</h2>
-          <STATUS label="Daily Send Automation" status="● Live" ok={true} />
-          <STATUS label="GHL SMS Integration" status="● Connected" ok={true} />
-          <STATUS label="Distress Monitoring" status="● Active 24/7" ok={true} />
-          <STATUS label="A2P 10DLC Compliance" status="✓ Approved" ok={true} />
-          <STATUS label="Access Code Redemption" status="● Live" ok={true} />
-          <STATUS label="GHL Drip Workflows" status="⚠ Setup Pending" ok={false} />
-          <div className="mt-5 bg-navy-900/5 rounded-xl p-4 border border-navy-900/10">
-            <div className="text-xs font-bold text-navy-900 mb-1">🤖 Lexington is on</div>
-            <div className="text-xs text-gray-500">Monitoring distress flags, managing content pipeline, and sending your Monday briefing every week.</div>
+        <div className="card" style={{background:"#0a0f1e",color:"white"}}>
+          <div className="text-xs text-blue-400 uppercase tracking-widest font-semibold mb-4">Quick Actions</div>
+          <div className="space-y-2">
+            {[
+              ["✉️","Review Messages","/messages"],
+              ["👥","View Subscribers","/subscribers"],
+              ["🚨","Check Flags","/flags"],
+              ["🔑","Access Codes","/codes"],
+              ["🏛️","Enterprise","/enterprise"],
+            ].map(([icon,label,href])=>(
+              <a key={href} href={href}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition text-sm text-slate-300 hover:text-white">
+                <span>{icon}</span>{label}
+              </a>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Pricing Snapshot */}
-      <div className="card mt-6">
-        <h2 className="font-bold text-navy-900 text-lg mb-5">Subscription Pricing</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Pricing reference */}
+      <div className="card border border-ll-lgray/50">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 className="font-bold text-ll-navy">Individual Pricing</h2>
+            <p className="text-xs text-ll-gray mt-0.5">Current rates from shoplovelaw.com</p>
+          </div>
+          <a href="https://shoplovelaw.com" target="_blank" className="text-xs text-ll-blue hover:underline">View live site ↗</a>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
           {[
-            { tier:"Law Students", mo:"$7.99", q:"$21.99", yr:"$59", color:"bg-blue-50 text-blue-700 border-blue-100" },
-            { tier:"Bar Prep", mo:"$12.99", q:"$36.99", yr:"$99", color:"bg-gold-400/10 text-navy-900 border-gold-400/20", badge:"Most Popular" },
-            { tier:"Attorneys", mo:"$9.99", q:"$29.99", yr:"$79", color:"bg-purple-50 text-purple-700 border-purple-100" },
-          ].map(p => (
-            <div key={p.tier} className={`border rounded-2xl p-4 ${p.color}`}>
-              {p.badge && <span className="text-xs bg-gold-400 text-navy-900 px-2 py-0.5 rounded-full font-bold mb-2 inline-block">{p.badge}</span>}
-              <div className="font-bold text-base mb-3">{p.tier}</div>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between"><span className="opacity-60">Monthly</span><span className="font-semibold">{p.mo}</span></div>
-                <div className="flex justify-between"><span className="opacity-60">90-Day</span><span className="font-semibold">{p.q}</span></div>
-                <div className="flex justify-between"><span className="opacity-60">Annual</span><span className="font-semibold">{p.yr}</span></div>
-              </div>
+            { segment:"Law Students", mo:"$7.99/mo", quarter:"$21.99/90-day", year:"$59/year" },
+            { segment:"Bar Prep", mo:"$12.99/mo", quarter:"$36.99/90-day", year:"$99/year", popular:true },
+            { segment:"Attorneys", mo:"$9.99/mo", quarter:"$29.99/90-day", year:"$79/year" },
+          ].map(p=>(
+            <div key={p.segment} className={`rounded-xl p-4 border ${p.popular?"border-ll-blue bg-blue-50":"border-ll-lgray bg-ll-offwhite"}`}>
+              {p.popular && <div className="text-xs text-ll-blue font-bold mb-1">★ Most Popular</div>}
+              <div className="font-semibold text-ll-navy text-sm mb-2">{p.segment}</div>
+              <div className="text-xl font-bold text-ll-navy">{p.mo}</div>
+              <div className="text-xs text-ll-gray mt-1">{p.quarter} · {p.year}</div>
             </div>
           ))}
         </div>
