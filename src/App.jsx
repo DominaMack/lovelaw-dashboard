@@ -10,6 +10,7 @@ import Subscribers from "./pages/Subscribers.jsx";
 import Enterprise from "./pages/Enterprise.jsx";
 import DistressFlags from "./pages/DistressFlags.jsx";
 import AccessCodes from "./pages/AccessCodes.jsx";
+import CardTemplates from "./pages/CardTemplates.jsx";
 import InstitutionOverview from "./pages/InstitutionOverview.jsx";
 import InstitutionRoster from "./pages/InstitutionRoster.jsx";
 import InstitutionFlags from "./pages/InstitutionFlags.jsx";
@@ -38,13 +39,14 @@ function ProtectedLayout({ user, setUser }) {
           </Routes>
         ) : (
           <Routes>
-            <Route path="/"            element={<Overview      user={activeUser} />} />
-            <Route path="/messages"    element={<Messages      user={activeUser} />} />
-            <Route path="/subscribers" element={<Subscribers   user={activeUser} />} />
-            <Route path="/enterprise"  element={<Enterprise    user={activeUser} />} />
-            <Route path="/flags"       element={<DistressFlags user={activeUser} />} />
-            <Route path="/codes"       element={<AccessCodes   user={activeUser} />} />
-            <Route path="*"            element={<Navigate to="/" />} />
+            <Route path="/"               element={<Overview       user={activeUser} />} />
+            <Route path="/messages"       element={<Messages       user={activeUser} />} />
+            <Route path="/subscribers"    element={<Subscribers    user={activeUser} />} />
+            <Route path="/enterprise"     element={<Enterprise     user={activeUser} />} />
+            <Route path="/flags"          element={<DistressFlags  user={activeUser} />} />
+            <Route path="/codes"          element={<AccessCodes    user={activeUser} />} />
+            <Route path="/card-templates" element={<CardTemplates  user={activeUser} />} />
+            <Route path="*"               element={<Navigate to="/" />} />
           </Routes>
         )}
       </main>

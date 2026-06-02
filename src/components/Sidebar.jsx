@@ -3,18 +3,19 @@ import { auth, DEMO_USERS, can } from "../api/base44.js";
 import { useState } from "react";
 
 const NAV_ADMIN = [
-  { to:"/",            icon:"📊", label:"Overview"      },
-  { to:"/messages",    icon:"✉️",  label:"Messages"      },
-  { to:"/subscribers", icon:"👥", label:"Subscribers"   },
-  { to:"/enterprise",  icon:"🏛️", label:"Enterprise"    },
-  { to:"/flags",       icon:"🚨", label:"Distress Flags" },
-  { to:"/codes",       icon:"🔑", label:"Access Codes"  },
+  { to:"/",               icon:"📊", label:"Overview"       },
+  { to:"/messages",       icon:"✉️",  label:"Messages"       },
+  { to:"/subscribers",    icon:"👥", label:"Subscribers"    },
+  { to:"/enterprise",     icon:"🏛️", label:"Enterprise"     },
+  { to:"/flags",          icon:"🚨", label:"Distress Flags" },
+  { to:"/codes",          icon:"🔑", label:"Access Codes"   },
+  { to:"/card-templates", icon:"🎨", label:"Card Templates" },
 ];
 
 const NAV_INSTITUTION = [
-  { to:"/",       icon:"📊", label:"Overview" },
-  { to:"/roster", icon:"👥", label:"My Roster" },
-  { to:"/flags",  icon:"🚨", label:"Distress Flags" },
+  { to:"/",       icon:"📊", label:"Overview"      },
+  { to:"/roster", icon:"👥", label:"My Roster"     },
+  { to:"/flags",  icon:"🚨", label:"Distress Flags"},
 ];
 
 export default function Sidebar({ user, realUser, onImpersonate }) {
@@ -38,7 +39,7 @@ export default function Sidebar({ user, realUser, onImpersonate }) {
           </div>
         </div>
 
-        {/* Institution badge */}
+        {/* Institution badge — shows tier, NO internal infrastructure info */}
         {isInstitution && (
           <div className="mt-3 px-3 py-2 rounded-xl text-xs text-blue-200 border border-blue-500/20" style={{background:"rgba(59,130,246,0.1)"}}>
             <div className="font-semibold">{user?.institution || "Your Institution"}</div>

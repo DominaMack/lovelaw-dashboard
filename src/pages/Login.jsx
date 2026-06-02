@@ -40,7 +40,7 @@ export default function Login({ onLogin }) {
             Every Step.
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed">
-            Internal operations platform for<br/>Love Law Collective, LLC.
+            Welcome, DC. Your platform is live.
           </p>
         </div>
 
@@ -93,7 +93,6 @@ export default function Login({ onLogin }) {
                   className="w-4 h-4 rounded accent-ll-blue" />
                 Stay signed in
               </label>
-              <a href="#" className="text-sm text-ll-blue hover:underline font-medium">Forgot password?</a>
             </div>
 
             {error && (
@@ -128,3 +127,4 @@ export default function Login({ onLogin }) {
     </div>
   );
 }
+
