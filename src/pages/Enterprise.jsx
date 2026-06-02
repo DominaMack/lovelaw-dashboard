@@ -1,187 +1,356 @@
 import { useState, useEffect } from "react";
-import { listEntity } from "../api/base44.js";
+import { Institution } from "@/api/entities";
+import { Subscriber } from "@/api/entities";
 
-// Real pricing from shoplovelaw.com + Pilot tier (sales tool, not public)
-const TIERS = [
-  {
-    key:"pilot",
-    name:"Pilot", users:"Up to 50 users", price:"$250/month", setup:"$0",
-    period:"90-day commitment, then converts to Small",
-    features:["Daily SMS messages","Standard message tracks","Email support","Basic engagement report","Converts to Small after 90 days"],
-    badge:"Best to Start",
-    badgeColor:"bg-amber-400 text-amber-900",
-    border:"border-amber-300",
-    cta:"Start a Pilot",
-    note:"Not listed publicly — offered directly during demos",
-    highlight: false,
-  },
-  {
-    key:"small",
-    name:"Small", users:"Up to 250 users", price:"$499/month", setup:"$500",
-    features:["Daily SMS messages","Basic customization","Email support","Monthly reports"],
-    border:"border-ll-lgray", badge:null, cta:"Get Started", highlight:false,
-  },
-  {
-    key:"mid-size",
-    name:"Mid-Size", users:"Up to 1,000 users", price:"$1,499/month", setup:"$1,000",
-    features:["Everything in Small","Custom message tracks","Priority support","Role-based messaging","Quarterly reviews"],
-    border:"border-ll-blue", badge:"Most Popular",
-    badgeColor:"bg-ll-blue text-white",
-    cta:"Get Started", highlight:true,
-  },
-  {
-    key:"enterprise",
-    name:"Enterprise", users:"Up to 5,000+ users", price:"$3,500/month", setup:"$2,500",
-    features:["Full customization","Dedicated support","Analytics dashboard","Multi-campus support","Custom integrations","White-label available"],
-    border:"border-ll-lgray", badge:null, cta:"Contact Us", highlight:false,
-  },
-];
+const TIER_COLORS = {
+  basic: "bg-gray-100 text-gray-700",
+  professional: "bg-blue-100 text-blue-700",
+  elite: "bg-purple-100 text-purple-700",
+};
 
-const WHO = [
-  { icon:"🎓", title:"Law Schools",        items:["1L onboarding","Academic support","Bar prep reinforcement"] },
-  { icon:"📚", title:"Bar Prep Programs",  items:["Daily accountability","Motivation during study"] },
-  { icon:"⚖️", title:"Law Firms",          items:["Associate wellness","Burnout prevention","Culture building"] },
-  { icon:"🤝", title:"Legal Organizations",items:["Member engagement","Professional development"] },
-];
+const TIER_FEATURES = {
+  basic: ["View approved message sequences", "Enroll students", "Basic delivery reports", "Email support"],
+  professional: ["All Basic features", "Reorder/suppress messages", "Custom start dates", "Monthly PDF reports", "Distress flag alerts", "Priority support"],
+  elite: ["All Professional features", "Custom message tracks", "Roster CSV upload", "Multi-cohort support", "White-label SMS", "Analytics dashboard", "Dedicated support", "Quarterly reviews", "API access"],
+};
 
-export default function Enterprise({ user }) {
+export default function Enterprise() {
   const [institutions, setInstitutions] = useState([]);
+  const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [newInst, setNewInst] = useState({
+    name: "", type: "law-school", tier: "basic", status: "trial",
+    admin_name: "", admin_email: "", admin_phone: "",
+    seat_limit: 50, seats_used: 0,
+    contract_start: "", contract_end: "",
+    bar_exam_date: "", bar_exam_sync: false,
+    allowed_segments: "bar-prep,bar-retaker",
+    allowed_tracks: "focus-standard,focus-faith-based",
+    custom_tracks_enabled: false, white_label_enabled: false,
+    white_label_name: "", notes: ""
+  });
 
-  useEffect(() => {
-    listEntity("Institution",{},100,0)
-      .then(d => { setInstitutions(d.records||[]); setLoading(false); })
-      .catch(() => setLoading(false));
-  },[]);
+  useEffect(() => { loadAll(); }, []);
+
+  async function loadAll() {
+    setLoading(true);
+    const [insts, subs] = await Promise.all([Institution.list(), Subscriber.list()]);
+    setInstitutions(insts);
+    setSubscribers(subs);
+    setLoading(false);
+  }
+
+  async function addInstitution() {
+    setSaving(true);
+    await Institution.create(newInst);
+    await loadAll();
+    setShowAdd(false);
+    setSaving(false);
+  }
+
+  async function updateInstitutionStatus(id, status) {
+    await Institution.update(id, { status });
+    setInstitutions(prev => prev.map(i => i.id === id ? { ...i, status } : i));
+  }
+
+  const instSubscribers = (instId) => subscribers.filter(s => s.institution_id === instId);
+  const seatUsage = (inst) => {
+    const used = instSubscribers(inst.id).length;
+    const pct = inst.seat_limit ? Math.round((used / inst.seat_limit) * 100) : 0;
+    return { used, pct };
+  };
+
+  const daysToExpiry = (dateStr) => {
+    if (!dateStr) return null;
+    const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+
+  const statusBadge = (status) => {
+    const map = { active: "bg-green-100 text-green-700", trial: "bg-amber-100 text-amber-700", suspended: "bg-red-100 text-red-600", cancelled: "bg-gray-100 text-gray-500" };
+    return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] || "bg-gray-100 text-gray-600"}`}>{status}</span>;
+  };
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="rounded-2xl p-6 md:p-8 mb-8 text-white" style={{background:"#0a0f1e"}}>
-        <div className="text-xs text-blue-400 uppercase tracking-widest font-semibold mb-2">Enterprise Solutions</div>
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">
-          Increase Bar Pass Rates.<br/>
-          <span style={{color:"#3b82f6"}}>Reduce Burnout. Improve Retention.</span>
-        </h1>
-        <p className="text-slate-400 text-sm md:text-base mb-5 max-w-2xl">
-          Love Law™ Enterprise delivers daily motivation and engagement through SMS to improve student success, retention, and bar readiness.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <button className="bg-ll-blue text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-600 transition text-sm">Schedule a Demo</button>
-          <button className="border-2 border-ll-blue/50 text-blue-300 font-semibold px-5 py-2.5 rounded-xl hover:border-ll-blue hover:text-white transition text-sm">Request Pricing</button>
-        </div>
-        <div className="mt-5 text-sm text-blue-300 font-semibold">📲 90%+ open rates with SMS engagement</div>
-      </div>
-
-      {/* Impact stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[["+35%","Engagement increase"],["92%","Average open rate"],["4.8/5","Satisfaction score"],["48hrs","Time to launch"]].map(([v,l])=>(
-          <div key={l} className="bg-white rounded-2xl shadow-card text-center py-5">
-            <div className="text-2xl font-bold" style={{color:"#3b82f6"}}>{v}</div>
-            <div className="text-xs text-ll-gray mt-1">{l}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Who */}
-      <div className="bg-white rounded-2xl shadow-card p-5 md:p-6 mb-8">
-        <h2 className="font-bold text-ll-navy text-lg mb-4">Who It's For</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {WHO.map(w => (
-            <div key={w.title} className="bg-ll-offwhite rounded-xl p-4 border border-ll-lgray">
-              <div className="text-2xl mb-2">{w.icon}</div>
-              <div className="font-semibold text-ll-navy text-sm mb-2">{w.title}</div>
-              <ul className="space-y-1">
-                {w.items.map(i=><li key={i} className="text-xs text-ll-gray flex gap-1.5"><span style={{color:"#3b82f6"}}>✓</span>{i}</li>)}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* PRICING — 4 tiers */}
-      <div className="mb-8">
-        <div className="mb-5">
-          <h2 className="font-bold text-ll-navy text-xl">Enterprise Pricing</h2>
-          <p className="text-ll-gray text-sm mt-1">Starting at $1–$2 per student/month. The Pilot tier is offered exclusively during sales demos — not listed publicly.</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {TIERS.map(t => (
-            <div key={t.key} className={`bg-white rounded-2xl border-2 ${t.border} p-5 relative flex flex-col ${t.highlight?"ring-2 ring-ll-blue/20":""}`}>
-              {t.badge && (
-                <div className={`absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${t.badgeColor||"bg-ll-blue text-white"}`}>
-                  {t.badge}
-                </div>
-              )}
-              <div className="font-bold text-ll-navy text-lg mb-0.5">{t.name}</div>
-              <div className="text-xs text-ll-gray mb-3">{t.users}</div>
-              <div className="text-2xl font-bold text-ll-navy">{t.price}</div>
-              <div className="text-xs text-ll-gray mb-1">Setup: {t.setup}</div>
-              {t.period && <div className="text-xs text-amber-600 font-medium mb-3">{t.period}</div>}
-              <ul className="space-y-1.5 mb-5 flex-1">
-                {t.features.map(f=>(
-                  <li key={f} className="text-xs text-ll-gray flex gap-2 items-start">
-                    <span className="text-green-500 mt-0.5 shrink-0">✓</span>{f}
-                  </li>
-                ))}
-              </ul>
-              {t.note && <div className="text-xs text-amber-600 italic mb-3">{t.note}</div>}
-              <button className={`w-full py-2.5 rounded-xl text-sm font-semibold transition ${t.highlight?"bg-ll-blue text-white hover:bg-blue-600":"border-2 border-ll-blue text-ll-blue hover:bg-ll-blue hover:text-white"}`}>
-                {t.cta}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Active institutions table */}
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
-        <div className="px-5 md:px-6 py-4 border-b border-ll-lgray flex flex-wrap gap-3 items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-5">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div>
-            <h2 className="font-bold text-ll-navy">Active Institutions</h2>
-            <p className="text-xs text-ll-gray mt-0.5">Enrolled enterprise clients</p>
+            <h1 className="text-xl font-bold text-gray-900">Enterprise</h1>
+            <p className="text-sm text-gray-500">{institutions.length} institutions · {subscribers.filter(s => s.subscriber_type === "enterprise").length} enterprise subscribers</p>
           </div>
-          <button className="bg-ll-blue text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-blue-600 transition">+ Onboard Institution</button>
+          <button onClick={() => setShowAdd(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition">
+            🏛️ Onboard Institution
+          </button>
         </div>
+      </div>
+
+      <div className="px-8 py-6 max-w-7xl mx-auto">
+        {/* Tier Overview Cards */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          {["basic", "professional", "elite"].map(tier => {
+            const count = institutions.filter(i => i.tier === tier && i.status === "active").length;
+            return (
+              <div key={tier} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full uppercase tracking-wide ${TIER_COLORS[tier]}`}>{tier}</span>
+                  <span className="text-2xl font-bold text-gray-900">{count}</span>
+                </div>
+                <div className="text-xs text-gray-500 mb-3">active institutions</div>
+                <div className="space-y-1">
+                  {TIER_FEATURES[tier].slice(0, 3).map(f => (
+                    <div key={f} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <span className="text-green-500">✓</span> {f}
+                    </div>
+                  ))}
+                  {TIER_FEATURES[tier].length > 3 && (
+                    <div className="text-xs text-gray-400">+{TIER_FEATURES[tier].length - 3} more features</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Institution List */}
         {loading ? (
-          <div className="text-center py-16 text-ll-gray">Loading...</div>
+          <div className="text-center py-16 text-gray-400">Loading institutions...</div>
         ) : institutions.length === 0 ? (
-          <div className="text-center py-16 text-ll-gray">
-            <div className="text-4xl mb-3">🏛️</div>
-            <div className="font-semibold text-ll-navy mb-1">No institutions enrolled yet</div>
-            <div className="text-sm">Start by scheduling a demo or onboarding your first pilot client.</div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-16">
+            <div className="text-5xl mb-3">🏛️</div>
+            <div className="text-gray-700 font-medium mb-1">No institutions yet</div>
+            <div className="text-sm text-gray-400 mb-4">Onboard your first law school or firm to get started.</div>
+            <button onClick={() => setShowAdd(true)} className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition">
+              Onboard Institution
+            </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-ll-offwhite border-b border-ll-lgray">
-                <tr>{["Institution","Type","Tier","Seats","Bar Exam","Status"].map(h=>(
-                  <th key={h} className="text-left text-xs font-semibold text-ll-gray uppercase tracking-wide px-5 py-3 whitespace-nowrap">{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody>
-                {institutions.map(inst=>(
-                  <tr key={inst.id} className="border-b border-ll-lgray/50 hover:bg-ll-offwhite cursor-pointer transition">
-                    <td className="px-5 py-4">
-                      <div className="font-semibold text-ll-navy text-sm">{inst.name}</div>
-                      <div className="text-xs text-ll-gray">{inst.admin_email}</div>
-                    </td>
-                    <td className="px-5 py-4 text-xs text-ll-gray capitalize">{inst.type}</td>
-                    <td className="px-5 py-4 text-xs text-ll-gray capitalize">{inst.tier}</td>
-                    <td className="px-5 py-4 text-xs text-ll-gray">{inst.seats_used||0}/{inst.seat_limit||0}</td>
-                    <td className="px-5 py-4 text-xs text-ll-gray">{inst.bar_exam_date||"—"}</td>
-                    <td className="px-5 py-4">
-                      <span className={`badge ${inst.status==="active"?"bg-green-100 text-green-700":"bg-slate-100 text-slate-500"}`}>
-                        {inst.status||"active"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 gap-4">
+            {institutions.map(inst => {
+              const { used, pct } = seatUsage(inst);
+              const expiry = daysToExpiry(inst.contract_end);
+              const isSelected = selected?.id === inst.id;
+              return (
+                <div key={inst.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="p-5 cursor-pointer" onClick={() => setSelected(isSelected ? null : inst)}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-2xl">
+                          {inst.type === "law-school" ? "🎓" : inst.type === "law-firm" ? "⚖️" : "📚"}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900">{inst.name}</div>
+                          <div className="text-sm text-gray-500 capitalize">{inst.type?.replace("-", " ")} · {inst.admin_email}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full uppercase ${TIER_COLORS[inst.tier]}`}>{inst.tier}</span>
+                        {statusBadge(inst.status)}
+                        {expiry !== null && expiry <= 30 && expiry > 0 && (
+                          <span className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-full font-medium">⚠ {expiry}d left</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Seat Usage Bar */}
+                    <div className="mt-4 flex items-center gap-4">
+                      <div className="flex-1">
+                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                          <span>Seats</span>
+                          <span>{used} / {inst.seat_limit || "∞"}</span>
+                        </div>
+                        <div className="bg-gray-100 rounded-full h-1.5">
+                          <div className={`h-1.5 rounded-full ${pct >= 80 ? "bg-red-400" : pct >= 60 ? "bg-amber-400" : "bg-green-400"}`}
+                            style={{ width: `${Math.min(pct, 100)}%` }} />
+                        </div>
+                      </div>
+                      {inst.bar_exam_sync && inst.bar_exam_date && (
+                        <div className="text-xs text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                          📅 Bar: {new Date(inst.bar_exam_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded Detail */}
+                  {isSelected && (
+                    <div className="border-t border-gray-100 p-5 bg-gray-50">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                        {[
+                          ["Admin", inst.admin_name],
+                          ["Phone", inst.admin_phone || "—"],
+                          ["Contract Start", inst.contract_start ? new Date(inst.contract_start).toLocaleDateString() : "—"],
+                          ["Contract End", inst.contract_end ? new Date(inst.contract_end).toLocaleDateString() : "—"],
+                          ["Allowed Segments", inst.allowed_segments || "—"],
+                          ["Allowed Tracks", inst.allowed_tracks?.replace(/focus-/g, "") || "—"],
+                          ["Custom Tracks", inst.custom_tracks_enabled ? "✅ Enabled" : "❌ Disabled"],
+                          ["White Label", inst.white_label_enabled ? `✅ ${inst.white_label_name || "Enabled"}` : "❌ Disabled"],
+                        ].map(([label, value]) => (
+                          <div key={label} className="bg-white rounded-xl p-3">
+                            <div className="text-xs text-gray-500 mb-0.5">{label}</div>
+                            <div className="text-sm font-medium text-gray-900">{value || "—"}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Enrolled Students */}
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Enrolled Subscribers ({instSubscribers(inst.id).length})</h4>
+                        {instSubscribers(inst.id).length === 0 ? (
+                          <div className="text-sm text-gray-400">No subscribers enrolled yet.</div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {instSubscribers(inst.id).slice(0, 10).map(s => (
+                              <div key={s.id} className="bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700">
+                                {s.first_name} {s.last_name} · Day {s.current_day_number || 1}
+                              </div>
+                            ))}
+                            {instSubscribers(inst.id).length > 10 && (
+                              <div className="text-xs text-gray-400 px-2 py-1.5">+{instSubscribers(inst.id).length - 10} more</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        {inst.status !== "active" && (
+                          <button onClick={() => updateInstitutionStatus(inst.id, "active")}
+                            className="text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200">✅ Activate</button>
+                        )}
+                        {inst.status === "active" && (
+                          <button onClick={() => updateInstitutionStatus(inst.id, "suspended")}
+                            className="text-sm bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg hover:bg-amber-200">⏸ Suspend</button>
+                        )}
+                        {inst.notes && (
+                          <div className="ml-4 text-xs text-gray-500 italic self-center">{inst.notes}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Add Institution Modal */}
+      {showAdd && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 overflow-y-auto max-h-[90vh]">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-900">🏛️ Onboard Institution</h2>
+              <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Institution Name</label>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                  placeholder="e.g. Howard University School of Law"
+                  value={newInst.name} onChange={e => setNewInst(n => ({ ...n, name: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
+                <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white"
+                  value={newInst.type} onChange={e => setNewInst(n => ({ ...n, type: e.target.value }))}>
+                  <option value="law-school">Law School</option>
+                  <option value="law-firm">Law Firm</option>
+                  <option value="bar-prep-company">Bar Prep Company</option>
+                  <option value="bar-association">Bar Association</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Tier</label>
+                <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white"
+                  value={newInst.tier} onChange={e => setNewInst(n => ({ ...n, tier: e.target.value }))}>
+                  <option value="basic">Basic</option>
+                  <option value="professional">Professional</option>
+                  <option value="elite">Elite</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Admin Name</label>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                  value={newInst.admin_name} onChange={e => setNewInst(n => ({ ...n, admin_name: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Admin Email</label>
+                <input type="email" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                  value={newInst.admin_email} onChange={e => setNewInst(n => ({ ...n, admin_email: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Seat Limit</label>
+                <input type="number" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                  value={newInst.seat_limit} onChange={e => setNewInst(n => ({ ...n, seat_limit: parseInt(e.target.value) }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white"
+                  value={newInst.status} onChange={e => setNewInst(n => ({ ...n, status: e.target.value }))}>
+                  <option value="trial">Trial</option>
+                  <option value="active">Active</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Contract Start</label>
+                <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                  value={newInst.contract_start} onChange={e => setNewInst(n => ({ ...n, contract_start: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Contract End</label>
+                <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                  value={newInst.contract_end} onChange={e => setNewInst(n => ({ ...n, contract_end: e.target.value }))} />
+              </div>
+            </div>
+
+            {/* Bar Exam Sync */}
+            <div className="bg-indigo-50 rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <div className="text-sm font-medium text-indigo-900">Bar Exam Date Sync</div>
+                  <div className="text-xs text-indigo-600">Aligns cohort messaging to the bar exam date</div>
+                </div>
+                <button onClick={() => setNewInst(n => ({ ...n, bar_exam_sync: !n.bar_exam_sync }))}
+                  className={`w-11 h-6 rounded-full transition-colors ${newInst.bar_exam_sync ? "bg-indigo-600" : "bg-gray-300"} relative`}>
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${newInst.bar_exam_sync ? "left-5" : "left-0.5"}`} />
+                </button>
+              </div>
+              {newInst.bar_exam_sync && (
+                <input type="date" className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm bg-white"
+                  value={newInst.bar_exam_date} onChange={e => setNewInst(n => ({ ...n, bar_exam_date: e.target.value }))} />
+              )}
+            </div>
+
+            {/* Tier Features Preview */}
+            <div className="bg-gray-50 rounded-xl p-4 mb-5">
+              <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+                {newInst.tier} Tier Includes:
+              </div>
+              <div className="grid grid-cols-2 gap-1">
+                {TIER_FEATURES[newInst.tier].map(f => (
+                  <div key={f} className="flex items-center gap-1.5 text-xs text-gray-700">
+                    <span className="text-green-500">✓</span> {f}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowAdd(false)} className="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={addInstitution} disabled={saving || !newInst.name || !newInst.admin_email}
+                className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition">
+                {saving ? "Saving..." : "Onboard Institution"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

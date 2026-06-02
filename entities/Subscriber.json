@@ -1,0 +1,140 @@
+{
+  "type": "object",
+  "properties": {
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "audience_segment": {
+      "type": "string",
+      "enum": [
+        "pre-law",
+        "law-student-1L",
+        "law-student-2L",
+        "law-student-3L",
+        "law-student-evening",
+        "law-student-parttime",
+        "bar-prep",
+        "bar-retaker",
+        "attorney",
+        "judge",
+        "paralegal",
+        "legal-assistant",
+        "police-officer",
+        "government-legal",
+        "public-interest",
+        "other-legal"
+      ]
+    },
+    "focus_track": {
+      "type": "string",
+      "enum": [
+        "focus-standard",
+        "focus-faith-based",
+        "focus-first-generation",
+        "focus-repeat-taker",
+        "focus-working-parent",
+        "focus-burnout-support"
+      ]
+    },
+    "identity_track": {
+      "type": "string",
+      "enum": [
+        "focus-women-in-law",
+        "focus-men-in-law",
+        "focus-black-in-law",
+        "focus-asian-american",
+        "focus-latino-hispanic",
+        "focus-lgbtq-in-law",
+        "focus-indigenous-in-law",
+        "focus-immigrant-professional",
+        "focus-minority-students"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "zh",
+        "tl",
+        "pt",
+        "fr",
+        "ht"
+      ],
+      "default": "en"
+    },
+    "subscription_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "cancelled",
+        "trial"
+      ]
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "premium",
+        "enterprise"
+      ]
+    },
+    "institution_id": {
+      "type": "string",
+      "description": "Linked institution if enterprise subscriber"
+    },
+    "subscriber_type": {
+      "type": "string",
+      "enum": [
+        "consumer",
+        "enterprise"
+      ],
+      "default": "consumer"
+    },
+    "add_ons": {
+      "type": "string"
+    },
+    "current_day_number": {
+      "type": "number"
+    },
+    "bar_exam_date": {
+      "type": "string",
+      "description": "Individual bar exam date if different from institution"
+    },
+    "emotional_state": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "stressed",
+        "overwhelmed",
+        "celebrating",
+        "needs-support"
+      ]
+    },
+    "distress_flag_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_reply": {
+      "type": "string"
+    },
+    "ghl_contact_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "Subscriber"
+}

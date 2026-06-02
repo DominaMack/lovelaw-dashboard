@@ -1,0 +1,146 @@
+{
+  "type": "object",
+  "properties": {
+    "message_text": {
+      "type": "string",
+      "description": "The full text of the SMS or email message"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "sms_daily",
+        "email_weekly",
+        "journal_prompt",
+        "reflection_prompt",
+        "planning_text",
+        "friday_reflection",
+        "faith_weekly",
+        "two_way_response"
+      ],
+      "description": "Type of message"
+    },
+    "audience_segment": {
+      "type": "string",
+      "enum": [
+        "pre-law",
+        "law-student-1L",
+        "law-student-2L",
+        "law-student-3L",
+        "law-student-evening",
+        "law-student-parttime",
+        "bar-prep",
+        "bar-retaker",
+        "attorney",
+        "judge",
+        "paralegal",
+        "legal-assistant",
+        "police-officer",
+        "government-legal",
+        "public-interest",
+        "other-legal",
+        "all"
+      ],
+      "description": "Primary audience segment this message targets"
+    },
+    "focus_track": {
+      "type": "string",
+      "enum": [
+        "focus-standard",
+        "focus-faith-based",
+        "focus-first-generation",
+        "focus-repeat-taker",
+        "focus-working-parent",
+        "focus-burnout-support"
+      ],
+      "description": "Primary emotional track this message belongs to"
+    },
+    "identity_track": {
+      "type": "string",
+      "enum": [
+        "focus-women-in-law",
+        "focus-men-in-law",
+        "focus-black-in-law",
+        "focus-asian-american",
+        "focus-latino-hispanic",
+        "focus-lgbtq-in-law",
+        "focus-indigenous-in-law",
+        "focus-immigrant-professional",
+        "focus-minority-students"
+      ],
+      "description": "Optional identity layer \u2014 leave blank for messages that apply to all identities"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "zh",
+        "tl",
+        "pt",
+        "fr",
+        "ht"
+      ],
+      "description": "Language of this message (default: en)",
+      "default": "en"
+    },
+    "season": {
+      "type": "string",
+      "enum": [
+        "fall",
+        "winter",
+        "spring",
+        "summer",
+        "evergreen"
+      ],
+      "description": "Seasonal relevance"
+    },
+    "emotional_tone": {
+      "type": "string",
+      "enum": [
+        "motivational",
+        "calming",
+        "accountability",
+        "celebratory",
+        "resilience",
+        "hope",
+        "faith",
+        "reflection",
+        "stress-support"
+      ],
+      "description": "Emotional tone of the message"
+    },
+    "day_number": {
+      "type": "number",
+      "description": "Day number in the sequence (1-365)"
+    },
+    "week_number": {
+      "type": "number",
+      "description": "Week number (1-52)"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "scheduled",
+        "sent"
+      ],
+      "description": "Approval and delivery status"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "description": "ISO date for scheduled delivery"
+    },
+    "tags": {
+      "type": "string",
+      "description": "Comma-separated search tags"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal review notes"
+    }
+  },
+  "required": [],
+  "name": "Message"
+}

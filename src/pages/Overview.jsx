@@ -1,149 +1,238 @@
 import { useState, useEffect } from "react";
-import { listEntity } from "../api/base44.js";
+import { Message } from "@/api/entities";
+import { Subscriber } from "@/api/entities";
+import { Institution } from "@/api/entities";
 import { Link } from "react-router-dom";
 
-function StatCard({ icon, value, label, color, sub }) {
-  return (
-    <div className="bg-white rounded-2xl shadow-card p-4 md:p-5 flex flex-col gap-2">
-      <span className="text-2xl">{icon}</span>
-      <div className="text-2xl md:text-3xl font-bold" style={color?{color}:{color:"#0f172a"}}>{value}</div>
-      <div className="text-sm text-ll-gray">{label}</div>
-      {sub && <div className="text-xs text-ll-gray">{sub}</div>}
-    </div>
-  );
-}
+const SEGMENT_LABELS = {
+  "bar-prep": "Bar Prep",
+  "bar-retaker": "Bar Retaker",
+  "law-student-1L": "1L",
+  "law-student-2L": "2L",
+  "law-student-3L": "3L",
+  "attorney": "Attorney",
+  "pre-law": "Pre-Law",
+};
 
-export default function Overview({ user }) {
-  const [msgs, setMsgs] = useState({approved:0, pending:0, total:0});
-  const [subs, setSubs] = useState({active:0, total:0});
-  const [flags, setFlags] = useState({open:0});
-  const [codes, setCodes] = useState({active:0});
+const TONE_COLORS = {
+  motivational: "bg-amber-100 text-amber-800",
+  calming: "bg-blue-100 text-blue-800",
+  accountability: "bg-purple-100 text-purple-800",
+  resilience: "bg-green-100 text-green-800",
+  hope: "bg-pink-100 text-pink-800",
+  faith: "bg-indigo-100 text-indigo-800",
+};
+
+export default function Dashboard() {
+  const [stats, setStats] = useState({
+    totalMessages: 0,
+    approvedMessages: 0,
+    pendingMessages: 0,
+    totalSubscribers: 0,
+    activeSubscribers: 0,
+    enterpriseSubscribers: 0,
+    totalInstitutions: 0,
+    activeInstitutions: 0,
+  });
+  const [segmentBreakdown, setSegmentBreakdown] = useState({});
+  const [recentSubscribers, setRecentSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const now = new Date();
-  const hour = now.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const firstName = user?.name?.split(" ")[0];
-
   useEffect(() => {
-    Promise.all([
-      listEntity("Message",{},500,0),
-      listEntity("Subscriber",{},500,0),
-      listEntity("DistrессFlag",{},200,0),
-      listEntity("AccessCode",{},200,0),
-    ]).then(([m,s,f,c]) => {
-      const mr=m.records||[], sr=s.records||[], fr=f.records||[], cr=c.records||[];
-      setMsgs({ approved:mr.filter(x=>x.approval_status==="approved").length, pending:mr.filter(x=>x.approval_status==="pending").length, total:mr.length });
-      setSubs({ active:sr.filter(x=>x.subscription_status==="active").length, total:sr.length });
-      setFlags({ open:fr.filter(x=>x.status==="new"||x.status==="acknowledged").length });
-      setCodes({ active:cr.filter(x=>x.status==="active").length });
-      setLoading(false);
-    }).catch(()=>setLoading(false));
-  },[]);
+    loadStats();
+  }, []);
+
+  async function loadStats() {
+    setLoading(true);
+    try {
+      const [allMsgs, subscribers, institutions] = await Promise.all([
+        Message.list(),
+        Subscriber.list(),
+        Institution.list(),
+      ]);
+
+      const approved = allMsgs.filter((m) => m.approval_status === "approved");
+      const pending = allMsgs.filter((m) => m.approval_status === "pending");
+      const active = subscribers.filter((s) => s.subscription_status === "active");
+      const enterprise = subscribers.filter((s) => s.subscriber_type === "enterprise");
+      const activeInst = institutions.filter((i) => i.status === "active");
+
+      // Segment breakdown
+      const breakdown = {};
+      allMsgs.forEach((m) => {
+        const seg = m.audience_segment || "unknown";
+        if (!breakdown[seg]) breakdown[seg] = { total: 0, approved: 0, pending: 0 };
+        breakdown[seg].total++;
+        if (m.approval_status === "approved") breakdown[seg].approved++;
+        if (m.approval_status === "pending") breakdown[seg].pending++;
+      });
+
+      setStats({
+        totalMessages: allMsgs.length,
+        approvedMessages: approved.length,
+        pendingMessages: pending.length,
+        totalSubscribers: subscribers.length,
+        activeSubscribers: active.length,
+        enterpriseSubscribers: enterprise.length,
+        totalInstitutions: institutions.length,
+        activeInstitutions: activeInst.length,
+      });
+      setSegmentBreakdown(breakdown);
+      setRecentSubscribers(subscribers.slice(0, 5));
+    } catch (e) {
+      console.error(e);
+    }
+    setLoading(false);
+  }
+
+  const StatCard = ({ label, value, sub, color, icon }) => (
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-1`}>
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500 font-medium">{label}</span>
+        <span className="text-2xl">{icon}</span>
+      </div>
+      <span className={`text-3xl font-bold ${color || "text-gray-900"}`}>{loading ? "—" : value}</span>
+      {sub && <span className="text-xs text-gray-400">{sub}</span>}
+    </div>
+  );
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      {/* Greeting */}
-      <div className="mb-6 md:mb-8">
-        <div className="text-xs text-ll-gray uppercase tracking-widest font-semibold mb-1">
-          {now.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-8 py-5 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Daily Dose of Justice™</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Love Law™ Admin Dashboard</p>
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-ll-navy">
-          {greeting}, {firstName} 👋
-        </h1>
-        <p className="text-ll-gray text-sm mt-1">Here's your Love Law™ platform at a glance.</p>
+        <div className="flex gap-3">
+          <Link to="/messages" className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition">
+            📝 Message Library
+          </Link>
+          <Link to="/subscribers" className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition">
+            👥 Subscribers
+          </Link>
+          <Link to="/enterprise" className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition">
+            🏛️ Enterprise
+          </Link>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-        <StatCard icon="✉️" value={loading?"—":msgs.total.toLocaleString()} label="Total Messages" color="#3b82f6" sub={loading?"":msgs.pending>0?`${msgs.pending} pending review`:undefined} />
-        <StatCard icon="✅" value={loading?"—":msgs.approved.toLocaleString()} label="Approved" />
-        <StatCard icon="👥" value={loading?"—":subs.active.toLocaleString()} label="Active Subscribers" sub={loading?"":subs.total>0?`${subs.total} total`:undefined} />
-        <StatCard icon="🚨" value={loading?"—":flags.open} label="Open Distress Flags" color={flags.open>0?"#ef4444":undefined} />
-      </div>
+      <div className="px-8 py-6 max-w-7xl mx-auto">
+        {/* System Status Banner */}
+        <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-3 mb-6 flex items-center gap-3">
+          <span className="text-green-500 text-lg">●</span>
+          <span className="text-green-800 text-sm font-medium">System Live — Daily sends active. GHL connected.</span>
+          <span className="ml-auto text-green-600 text-xs">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* System Status — Love Law admin only */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-card p-5 md:p-6">
-          <h2 className="font-bold text-ll-navy mb-4">System Status</h2>
-          <div className="space-y-3">
-            {[
-              { label:"Daily Send Automation", status:"Live — 8:00 AM ET", ok:true },
-              { label:"GHL SMS Integration",   status:"Connected", ok:true },
-              { label:"A2P 10DLC Compliance",  status:"Approved", ok:true },
-              { label:"Distress Monitoring",   status:"Active 24/7", ok:true },
-              { label:"Message Library",
-                status: loading ? "Loading..." : msgs.total>0 ? `${msgs.total.toLocaleString()} messages · ${msgs.approved.toLocaleString()} approved` : "No messages loaded",
-                ok: msgs.approved > 0 },
-              { label:"Access Codes Active",   status: loading?"Loading...":`${codes.active} active codes`, ok:true },
-            ].map(s=>(
-              <div key={s.label} className="flex items-center justify-between py-2.5 border-b border-ll-lgray/50 last:border-0">
-                <span className="text-sm text-ll-navy font-medium">{s.label}</span>
-                <span className={`flex items-center gap-2 text-xs font-semibold ${s.ok?"text-green-600":"text-amber-600"}`}>
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${s.ok?"bg-green-500":"bg-amber-400"}`}/>
-                  {s.status}
-                </span>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Total Messages" value={stats.totalMessages} sub="in library" icon="📚" />
+          <StatCard label="Approved" value={stats.approvedMessages} color="text-green-600" sub="ready to send" icon="✅" />
+          <StatCard label="Pending Review" value={stats.pendingMessages} color={stats.pendingMessages > 0 ? "text-amber-600" : "text-gray-900"} sub="awaiting approval" icon="⏳" />
+          <StatCard label="Active Subscribers" value={stats.activeSubscribers} color="text-indigo-600" sub={`${stats.totalSubscribers} total`} icon="👤" />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Enterprise Subscribers" value={stats.enterpriseSubscribers} icon="🏛️" />
+          <StatCard label="Institutions" value={stats.totalInstitutions} sub={`${stats.activeInstitutions} active`} icon="🎓" />
+          <StatCard label="Messages Sent Today" value={stats.activeSubscribers} sub="estimated" icon="📤" />
+          <StatCard label="Tracks Available" value="6" sub="Standard + Faith-Based" icon="🎯" />
+        </div>
+
+        {/* Segment Breakdown */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Message Library by Segment</h2>
+            {loading ? (
+              <div className="text-gray-400 text-sm">Loading...</div>
+            ) : (
+              <div className="space-y-3">
+                {Object.entries(segmentBreakdown).map(([seg, data]) => (
+                  <div key={seg} className="flex items-center gap-3">
+                    <span className="text-sm text-gray-700 w-28 shrink-0">{SEGMENT_LABELS[seg] || seg}</span>
+                    <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-indigo-500 h-2 rounded-full"
+                        style={{ width: `${Math.round((data.approved / data.total) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-500 w-20 text-right">{data.approved}/{data.total} approved</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="rounded-2xl p-5 text-white" style={{background:"#0a0f1e"}}>
-          <div className="text-xs text-blue-400 uppercase tracking-widest font-semibold mb-4">Quick Actions</div>
-          <div className="space-y-1">
-            {[
-              { icon:"✉️", label:"Review Messages",   to:"/messages" },
-              { icon:"👥", label:"View Subscribers",  to:"/subscribers" },
-              { icon:"🚨", label:"Check Flags",        to:"/flags" },
-              { icon:"🔑", label:"Access Codes",       to:"/codes" },
-              { icon:"🏛️", label:"Enterprise",         to:"/enterprise" },
-            ].map(a=>(
-              <Link key={a.to} to={a.to}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition text-sm text-slate-300 hover:text-white">
-                <span>{a.icon}</span>{a.label}
+          {/* Quick Actions */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div className="space-y-3">
+              <Link to="/messages/new" className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 transition cursor-pointer">
+                <span className="text-xl">✍️</span>
+                <div>
+                  <div className="text-sm font-medium text-indigo-900">Create New Message</div>
+                  <div className="text-xs text-indigo-600">GSM-7 validated, live preview</div>
+                </div>
               </Link>
-            ))}
+              <Link to="/messages?status=pending" className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition cursor-pointer">
+                <span className="text-xl">📋</span>
+                <div>
+                  <div className="text-sm font-medium text-amber-900">Review Pending Messages</div>
+                  <div className="text-xs text-amber-600">{stats.pendingMessages} waiting for approval</div>
+                </div>
+              </Link>
+              <Link to="/subscribers/new" className="flex items-center gap-3 p-3 rounded-xl bg-green-50 hover:bg-green-100 transition cursor-pointer">
+                <span className="text-xl">➕</span>
+                <div>
+                  <div className="text-sm font-medium text-green-900">Add Subscriber</div>
+                  <div className="text-xs text-green-600">Consumer or Enterprise</div>
+                </div>
+              </Link>
+              <Link to="/enterprise/new" className="flex items-center gap-3 p-3 rounded-xl bg-purple-50 hover:bg-purple-100 transition cursor-pointer">
+                <span className="text-xl">🏛️</span>
+                <div>
+                  <div className="text-sm font-medium text-purple-900">Onboard Institution</div>
+                  <div className="text-xs text-purple-600">Law school, firm, or bar association</div>
+                </div>
+              </Link>
+            </div>
           </div>
+        </div>
 
-          {/* Alerts */}
-          {flags.open > 0 && (
-            <div className="mt-4 rounded-xl p-3 border border-red-400/40" style={{background:"rgba(239,68,68,0.1)"}}>
-              <div className="text-xs text-red-300 font-bold mb-0.5">🚨 {flags.open} open distress flag{flags.open>1?"s":""}</div>
-              <Link to="/flags" className="text-xs text-red-200 underline">Review now →</Link>
+        {/* Recent Subscribers */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Recent Subscribers</h2>
+            <Link to="/subscribers" className="text-indigo-600 text-sm hover:underline">View all →</Link>
+          </div>
+          {recentSubscribers.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <div className="text-4xl mb-2">👤</div>
+              <div className="text-sm">No subscribers yet. Share your landing page to get started.</div>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {recentSubscribers.map((s) => (
+                <div key={s.id} className="flex items-center gap-4 py-3">
+                  <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm">
+                    {(s.first_name?.[0] || "?").toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">{s.first_name} {s.last_name}</div>
+                    <div className="text-xs text-gray-400">{SEGMENT_LABELS[s.audience_segment] || s.audience_segment} · Day {s.current_day_number || 1}</div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                    s.subscription_status === "active" ? "bg-green-100 text-green-700" :
+                    s.subscription_status === "trial" ? "bg-amber-100 text-amber-700" :
+                    "bg-gray-100 text-gray-600"
+                  }`}>
+                    {s.subscription_status}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
-          {msgs.pending > 0 && (
-            <div className="mt-2 rounded-xl p-3 border border-amber-400/40" style={{background:"rgba(251,191,36,0.08)"}}>
-              <div className="text-xs text-amber-300 font-bold mb-0.5">⏳ {msgs.pending} messages need approval</div>
-              <Link to="/messages" className="text-xs text-amber-200 underline">Review now →</Link>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Pricing reference — admin only, not institution */}
-      <div className="mt-5 bg-white rounded-2xl shadow-card p-5 md:p-6 border border-ll-lgray/50">
-        <div className="flex flex-wrap gap-2 justify-between items-start mb-4">
-          <div>
-            <h2 className="font-bold text-ll-navy">Live Pricing Reference</h2>
-            <p className="text-xs text-ll-gray mt-0.5">From shoplovelaw.com — for internal reference only</p>
-          </div>
-          <a href="https://shoplovelaw.com" target="_blank" rel="noreferrer" className="text-xs text-ll-blue hover:underline">View live site ↗</a>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { seg:"Law Students",  mo:"$7.99/mo", q:"$21.99/90-day", yr:"$59/yr" },
-            { seg:"Bar Prep",      mo:"$12.99/mo",q:"$36.99/90-day", yr:"$99/yr", pop:true },
-            { seg:"Attorneys",     mo:"$9.99/mo", q:"$29.99/90-day", yr:"$79/yr" },
-          ].map(p=>(
-            <div key={p.seg} className={`rounded-xl p-4 border ${p.pop?"border-ll-blue bg-blue-50":"border-ll-lgray bg-ll-offwhite"}`}>
-              {p.pop && <div className="text-xs text-ll-blue font-bold mb-1">★ Most Popular</div>}
-              <div className="font-semibold text-ll-navy text-sm mb-2">{p.seg}</div>
-              <div className="text-xl font-bold text-ll-navy">{p.mo}</div>
-              <div className="text-xs text-ll-gray mt-1">{p.q} · {p.yr}</div>
-            </div>
-          ))}
         </div>
       </div>
     </div>

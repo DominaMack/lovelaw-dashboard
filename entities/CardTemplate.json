@@ -1,0 +1,98 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "template_type": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "institution"
+      ],
+      "default": "standard"
+    },
+    "institution_id": {
+      "type": "string"
+    },
+    "template_file_url": {
+      "type": "string"
+    },
+    "template_file_type": {
+      "type": "string",
+      "enum": [
+        "pdf",
+        "png",
+        "jpg"
+      ]
+    },
+    "card_size": {
+      "type": "string",
+      "enum": [
+        "letter",
+        "half_letter",
+        "business_card"
+      ],
+      "description": "letter=8.5x11in 1/page | half_letter=5.5x4.25in 4/page 2x2 | business_card=3.5x2in 10/page 2x5"
+    },
+    "code_placeholder": {
+      "type": "string",
+      "default": "{{CODE}}"
+    },
+    "segment_placeholder": {
+      "type": "string",
+      "default": "{{SEGMENT}}"
+    },
+    "duration_placeholder": {
+      "type": "string",
+      "default": "{{DURATION}}"
+    },
+    "institution_name_placeholder": {
+      "type": "string",
+      "default": "{{INSTITUTION}}"
+    },
+    "audience_segments": {
+      "type": "string"
+    },
+    "output_formats": {
+      "type": "string",
+      "enum": [
+        "png_only",
+        "pdf_only",
+        "both"
+      ],
+      "default": "both"
+    },
+    "pdf_layout": {
+      "type": "string",
+      "enum": [
+        "1_per_page",
+        "4_per_page",
+        "10_per_page"
+      ],
+      "description": "1_per_page=letter cards | 4_per_page=half-letter 2x2 | 10_per_page=business card 2x5"
+    },
+    "print_ready": {
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "draft",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "preview_url": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "CardTemplate"
+}

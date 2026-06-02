@@ -1,0 +1,100 @@
+{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Unique access code (e.g. LLRX-XXXX-XXXX)"
+    },
+    "batch_name": {
+      "type": "string",
+      "description": "Batch name (e.g. Amazon Q2 2026, Howard University Fall 2026)"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "amazon",
+        "etsy",
+        "walmart",
+        "bookstore",
+        "event",
+        "institution",
+        "direct",
+        "other"
+      ],
+      "description": "Where this code was distributed"
+    },
+    "audience_segment": {
+      "type": "string",
+      "enum": [
+        "bar-prep",
+        "bar-retaker",
+        "law-student-1L",
+        "law-student-2L",
+        "law-student-3L",
+        "attorney",
+        "any"
+      ],
+      "description": "Segment this code unlocks (any = subscriber chooses)"
+    },
+    "focus_track": {
+      "type": "string",
+      "enum": [
+        "focus-standard",
+        "focus-faith-based",
+        "any"
+      ],
+      "description": "Track this code unlocks"
+    },
+    "days_of_access": {
+      "type": "number",
+      "description": "Number of days of access granted (e.g. 90, 180, 365)"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "premium"
+      ],
+      "default": "standard"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unused",
+        "redeemed",
+        "expired",
+        "voided"
+      ],
+      "default": "unused"
+    },
+    "redeemed_by": {
+      "type": "string",
+      "description": "Subscriber ID who redeemed"
+    },
+    "redeemed_at": {
+      "type": "string",
+      "description": "ISO datetime of redemption"
+    },
+    "redeemed_phone": {
+      "type": "string",
+      "description": "Phone number used to redeem"
+    },
+    "institution_id": {
+      "type": "string",
+      "description": "If distributed by an institution"
+    },
+    "expires_at": {
+      "type": "string",
+      "description": "ISO date after which code is invalid"
+    },
+    "price_paid": {
+      "type": "number",
+      "description": "Price paid for this code in USD"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "AccessCode"
+}

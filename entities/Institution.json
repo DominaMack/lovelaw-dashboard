@@ -1,0 +1,99 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "law-school",
+        "law-firm",
+        "bar-prep-company",
+        "bar-association",
+        "other"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "professional",
+        "elite"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "trial",
+        "suspended",
+        "cancelled"
+      ],
+      "default": "trial"
+    },
+    "admin_name": {
+      "type": "string"
+    },
+    "admin_email": {
+      "type": "string"
+    },
+    "admin_phone": {
+      "type": "string"
+    },
+    "seat_limit": {
+      "type": "number"
+    },
+    "seats_used": {
+      "type": "number",
+      "default": 0
+    },
+    "contract_start": {
+      "type": "string"
+    },
+    "contract_end": {
+      "type": "string"
+    },
+    "bar_exam_date": {
+      "type": "string"
+    },
+    "bar_exam_sync": {
+      "type": "boolean",
+      "default": false
+    },
+    "allowed_segments": {
+      "type": "string"
+    },
+    "allowed_tracks": {
+      "type": "string"
+    },
+    "custom_tracks_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "white_label_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "white_label_name": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL of institution logo uploaded for card/white-label use"
+    },
+    "card_template_id": {
+      "type": "string",
+      "description": "ID of the CardTemplate record to use for access code card generation"
+    },
+    "card_accent_color": {
+      "type": "string",
+      "description": "Hex color for institution-branded card accent (e.g. #1a56db)"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "Institution"
+}
